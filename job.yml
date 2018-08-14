@@ -1,0 +1,32 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: node-killer
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      containers:
+        - name: node-killer
+          image: google/cloud-sdk:206.0.0
+          command:
+            - /bin/bash
+            - -c
+            - gcloud auth activate-service-account --key-file=/var/secrets/google/key.json && /bin/bash /node-killer/node-killer.sh
+          volumeMounts:
+            - name: node-killer-volume
+              mountPath: /node-killer/
+            - name: node-killer-svc-acc
+              mountPath: /var/secrets/google
+          env:
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/secrets/google/key.json
+      volumes:
+        - name: node-killer-volume
+          configMap:
+            name: node-killer.sh
+        - name: node-killer-svc-acc
+          secret:
+            secretName: node-killer-svc-acc-key
+      restartPolicy: Never
